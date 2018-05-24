@@ -1,0 +1,193 @@
+---
+title: "HW04: Počítanie hashovacích funkcií"
+layout: "homework"
+list-of-files: ["gethash.c", "hash_helper.h", "hash_helper.c"]
+publish: now
+deadline-early: "2018-04-28 24:00"
+deadline-final: "2018-05-01 24:00"
+author: "Milan Fabian"
+editor: Peter Stanko
+editor-email: stanko@mail.muni.cz
+---
+
+= HW04: Počítanie hashovacích funkcií
+
+Doplnění zadání:
+
+**2018-04-22 22:50**::
+Upresnenie varovania pre dynamickú alokáciu a veľkosť vstupu.
+
+== Predstavenie úlohy
+
+V praxi sa často stretávame s potrebou overiť, či dáta (napríklad súbor), ktoré máme,
+nie sú poškodené alebo zmenené. Na tento účel sa používajú rôzne hashovacie operácie,
+ktoré z ľubovoľne dlhého reťazca vstupných dát vypočítajú *kontrolný súčet (checksum)*
+pevne stanovenej dĺžky, väčšinou rádovo pár bajtov.
+Dôležitou vlasnosťou hashovacích operácií je, že aj malá zmena na vstupe
+(napr. stačí zmena jediného bitu) sa prejaví na výstupe vo forme úplne iného výsledku.
+
+Určite ste sa už stretli s tým, že na internete bol pri súbore, ktorý ste chceli stiahnuť,
+uvedený aj jeho *MD5* hash. Ten slúži práve na kontrolu po stiahnutí,
+či náhodou nedošlo pri sieťovom prenose k porušeniu dát.
+Ak by ste si chceli overiť, či je stiahnutý súbor v poriadku, vypočítate jeho hash
+(napríklad pomocou programu, ktorý budete mať na konci tejto úlohy) a porovnáte ho s hashom,
+ktorý bol uvedený na stránke.
+V prípade, že sa zhodujú, je takmer isté, že ste súbor stiahli v poriadku.
+
+V tejto úlohe si vyskúšate počítanie niekoľných často používaných hashovacích funkcií.
+
+'''
+
+== Zadanie
+
+[.alert.alert-warning]
+icon:exclamation[role="mr-2"] Kostra úlohy obsahuje len niektoré pomocné
+funkcie v `hash_helper.c`. Súbor
+`gethash.c` si vytvorte sami, `CMakeLists.txt` si môžete prispôsobiť
+z kostry link:../homework-02/pb071-hw02.zip[druhej domácej úlohy],
+kde stačí zmeniť nastavenia v časti `Project configuration`.
+
+Vytvorte kompletný spustiteľný program, ktorý vypočítava rôzne kontrolné súčty
+zo zadaného súboru alebo zo štandardného vstupu.
+
+Nasleduje zoznam podporovaných hashovacích funkcí.
+
+=== XOR
+
+Postupne aplikuje operáciu XOR (operátor `^` v C) na všetky bajty zo vstupu.
+Výsledkom je *8 bitové číslo*. Tento veľmi jednoduchý a rýchly algoritmus sa používa v
+embedded systémoch s nízkym výkonom na kontrolu pri prenose dát.
+
+=== CRC-16
+
+*Cyclic redundancy check* s dĺžkou *16 bitov*, konkrétne vo verzii *CRC-16-CCITT*,
+ktorá sa používa napríklad v protokoloch *Bluetooth* alebo *SD*.
+Viac informácií o *CRC16* môžete nájsť na
+link:http://cs.wikipedia.org/wiki/Cyklick%C3%BD_redundantn%C3%AD_sou%C4%8Det[wikipedii]
+(jednotlivé varianty sa líšia len v generujúcom polynóme).
+
+==== CRC-32
+
+*Cyclic redundancy check* s dĺžkou *32 bitov*, ktorý sa používa napríklad vo formátoch *MPEG*
+alebo *PNG*. Na Linuxe býva na výpočet *CRC-32* dostupná utilita `crc32`.
+
+==== MD5
+
+Hashovacia funkcia, ktorá z dát vypočíta *128 bitový (16 bajtový) hash*.
+Na Linuxe je na výpočet MD5 dostupná utilita `md5sum`.
+Viac informácií o *MD5* môžete nájsť na
+link:http://cs.wikipedia.org/wiki/Message-Digest_algorithm#MD5[českej]
+alebo link:http://en.wikipedia.org/wiki/MD5[anglickej] wikipédii.
+
+'''
+
+== Požiadavky
+
+=== Spustenie programu:
+
+[source,sh]
+----
+./gethash [-md5] [-c16] [-c32] [-xor] [-hex] [-f file]
+----
+
+==== Prepínače
+
+- `-md5` -- vypočíta *MD5* hash.
+- `-c16` -- vypočíta *CRC-16* hash.
+- `-c32` -- vypočíta *CRC-32* hash.
+- `-xor` -- vypočíta *XOR* hash.
+- `-hex` -- hash bude vypisovaný ako *hexadecimálne číslo*
+(predpona `0x`, všetky písmená malé, prázdne miesta doplnené nulou na 1 bajt pri *XOR*,
+2 bajty pri *CRC-16*, 4 bajty pri *CRC-32* a 16 bajtov pri *MD5*).
+Ak užívateľ nezadá tento parameter, bude sa výsledok vypisovať ako decimálne číslo
+(bez dopĺňania núl). **Výnimku tvorí hash *MD5*, ktorý sa bude vždy vypisovať
+ako *hexadecimálne číslo* bez predpony 0x.**
+
+- `-f` - hash sa bude počítať zo zadaného súboru (cesta k súboru nasleduje hneď za parametrom `-f`).
+Ak užívateľ nezadá tento parameter, načítava sa zo štandardného vstupu.
+
+**Na poradí parametrov nezáleží**, `./gethash -md5 -hex -f test.txt` sa spracuje presne tak isto ako
+`./gethash -f test.txt -hex -md5.`
+Jedinú výnimku tvorí parameter `-f`, za ktorým *vždy* nasleduje cesta k súboru.
+`./gethash -f -hex -md5` teda počíta hash zo súboru s názvom `-hex`.
+
+Ak užívateľ nezadá žiadny parameter, nezadá ani jeden parameter určujúci,
+ktorý hash sa má počítať, zadá neplatný parameter, alebo zadá parameter `-f` bez súboru
+(teda všetky prípady, ktoré nedávajú zmysel), program vypíše hlášku na
+*štandardný chybový výstup* (presný text hlášky je na vás)
+a skončí s *nenulovým návratovým kódom*.
+
+Ak sa má hash počítať zo súboru a zadaný súbor sa nepodarí otvoriť v režime *čítania*
+(napr. neexistuje alebo užívateľ nemá dostatočné práva), program o tom vypíše hlášku na
+*štandardný chybový výstup* (presný text hlášky je na vás) a skončí s
+*nenulovým návratovým kódom*.
+
+Ak sa má hash počítať zo *štandardného vstupu*, načítavať sa bude až po `EOF`
+(v termináli klávesová skratka kbd:[Ctrl] + kbd:[D]).
+
+=== Správanie
+
+- po dokončení načítavania vypíše program na *štandardný výstup* dĺžku načítaného vstupu
+  v bajtoch vo formáte `Length: X bytes\n`, kde `X` je číslo v *desiatkovej sústave*
+- program ďalej vypíše na *štandardný výstup* kontrolné súčty podľa zadaných parametrov
+  vo formáte `NAZOV_HASHU: vysledok\n`. Poradie hashovacích funkcií je nasledujúce:
+  `XOR`, `CRC-16`, `CRC-32`, `MD5`.
+  Tie, ktoré si užívateľ nezvolil, sa pravdaže nevypisujú.
+  **Toto poradie musíte dodržať**.
+- program by z dôvodu rýchlosti nemal zbytočne počítať tie hashe, ktoré si
+  používateľ nezvolil
+- implementáciu `CRC-16` a `MD5` nájdete v kostre úlohy
+- vysvetlenie jednotlivých funkcií nájdete v komentároch v hlavičkovom súbore
+- v prípade, že sa vám poskytnutá implementácia z nejakého dôvodu nehodí,
+  môžete použiť aj vlastnú implementáciu (za predpokladu, že bude korektná)
+- implementácia `XOR` by mala byť pre vás triviálna, pri implementácii `CRC-32`
+  sa môžete inšiprovať napríklad link:http://www.hackersdelight.org/hdcodetxt/crc.c.txt[tu].
+
+[.alert.alert-danger]
+icon:exclamation[role="mr-2"] Program musí vedieť spracovať dáta
+(zo štandardného vstupu alebo zo súboru) **ľubovoľnej dĺžky**. Riešenia,
+ktoré predpokladajú fixnú veľkosť súboru túto podmienku **nesplnia**
+a môžu byť penalizované dodatočne, aj keď prejdú všetkými testami.
+
+[.add]#Varovanie platí aj pre riešenia, ktoré používajú dynamickú alokáciu
+na načítanie celého obsahu do pamäte. V prípade, že sa alokácia ďalšej
+pamäte nepodarí, program sa musí z tejto chyby vedieť zotaviť a hash
+dopočítať. Je to však zbytočne komplikované, na túto úlohu dynamickú alokáciu
+nepotrebujete vôbec.#
+
+=== Príklad práce s programom:
+
+[source,sh]
+----
+$ echo Hi! > test.txt
+$ ./gethash -xor -c16 -hex -f test.txt
+Length: 4 bytes
+XOR: 0x0a
+CRC-16: 0xfef8
+$ ./gethash -md5 -c32 -f test.txt
+Length: 4 bytes
+CRC-32: 1420338076
+MD5: 7e1db7d7b9f7c02085d2b56c2bb69cd8
+----
+
+'''
+
+== Poznámky
+
+- program prekladajte nasledovne:
++
+[source,sh]
+----
+gcc -std=c99 -Wall -Wextra -Werror -pedantic -o gethash gethash.c hash_helper.c.
+----
+
+- svoj program si otestujte na memory leaky (neuvoľnená pamäť, nezavreté súbory, atď.),
+  bude sa kontrolovať pomocou nástroja `valgrind`
+- nie je potrebné snažiť sa výpočet hash-u čo najviac optimalizovať,
+  cieľom úlohy je, aby ste si vyskúšali prácu s hashovacími funkciami a súbormi.
+  Riešenia sa teda nebudú explicitne kontrolovať na zložitosť, ale zároveň
+  nesmie byť spracovanie súboru príliš pomalé (napr. po bytoch), inak testy
+  neprejdú na bežných limitoch na čas.
+- vzorové riešenie si môžete vyskúšať na Aise: `/home/kontr/hw04/gethash`
+- využite možnosť porovnať výsledok vašeho riešenia s výsledkom vzorového riešenia pomocou príkazu
+  `diff`
